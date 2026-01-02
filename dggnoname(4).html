@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering Spec Sheet - Ranvijay Kumar</title>
+    <style>
+        :root { --scale: 2; --accent: #2563eb; --text-dark: #1e293b; }
+        body { font-family: 'Inter', -apple-system, sans-serif; display: flex; margin: 0; height: 100vh; background: #f1f5f9; color: var(--text-dark); }
+        .sidebar { width: 350px; background: #ffffff; border-right: 1px solid #cbd5e1; padding: 25px; display: flex; flex-direction: column; gap: 15px; z-index: 1000; box-shadow: 4px 0 15px rgba(0,0,0,0.05); }
+        .workspace { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #cbd5e1; position: relative; }
+        .plate-wrapper { position: relative; padding: 60px; }
+        .plate { width: 560px; height: 560px; background: #ffffff; border: 2px solid #000; position: relative; cursor: crosshair; }
+        .center-hole { position: absolute; width: 240px; height: 240px; left: 160px; top: 160px; border: 1.5px solid #000; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 2; }
+        #dynamic-hole { position: absolute; border: 2px solid var(--accent); background: rgba(37, 99, 235, 0.1); border-radius: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--accent); font-size: 11px; pointer-events: none; z-index: 3; }
+        .dim-line { position: absolute; border: 0.5px solid #000; pointer-events: none; z-index: 4; }
+        .dim-label { position: absolute; background: #fff; padding: 2px 6px; font-size: 11px; font-weight: 700; transform: translate(-50%, -50%); border: 0.5px solid #000; z-index: 10; }
+        .weight-box { background: #1e293b; color: #fff; padding: 20px; border-radius: 10px; text-align: center; }
+        .title-block { display: none; width: 560px; margin-top: 40px; border: 2.5px solid #000; border-collapse: collapse; background: #fff; }
+        .title-block td { border: 1px solid #000; padding: 12px; font-size: 12px; }
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { background: white; width: 210mm; display: block; }
+            .sidebar { display: none !important; }
+            .workspace { background: none; width: 100%; height: auto; padding-top: 30mm; }
+            .plate-wrapper { transform: scale(0.85); transform-origin: top center; }
+            .title-block { display: table; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 style="margin:0; color:var(--accent)">Ranvijay Kumar</h2>
+        <p style="font-size:12px; margin: 2px 0; font-weight: bold;">Mob: +91 7800817675</p>
+        <p style="font-size:12px; margin-top:0; opacity:0.7">Precision Plate v2.1</p>
+        
+        <div style="background:#f1f5f9; padding:15px; border-radius:8px;">
+            <label style="font-size:12px; font-weight:800; display:block; margin-bottom:5px;">MATERIAL</label>
+            <select id="mat" onchange="update()" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px;">
+                <option value="7.85">Carbon Steel (7.85g/cm³)</option>
+                <option value="2.70">Aluminum (2.70g/cm³)</option>
+                <option value="8.00">Stainless Steel (8.00g/cm³)</option>
+                <option value="8.50">Brass/Bronze (8.50g/cm³)</option>
+            </select>
+        </div>
+
+        <label style="font-size:13px; font-weight:700">Thickness (Z): <span id="zt" style="float:right">20mm</span></label>
+        <input type="range" id="zi" min="1" max="50" value="20" oninput="update()" style="width:100%">
+
+        <label style="font-size:13px; font-weight:700">Hole Diameter (Ø): <span id="dt" style="float:right">35mm</span></label>
+        <input type="range" id="di" min="5" max="100" value="35" oninput="update()" style="width:100%">
+
+        <label style="font-size:13px; font-weight:700">X Position: <span id="xt" style="float:right">80mm</span></label>
+        <input type="range" id="xi" min="0" max="280" value="80" oninput="update()" style="width:100%">
+
+        <label style="font-size:13px; font-weight:700">Y Position: <span id="yt" style="float:right">80mm</span></label>
+        <input type="range" id="yi" min="0" max="280" value="80" oninput="update()" style="width:100%">
+
+        <div class="weight-box">
+            <div style="font-size:11px; opacity:0.8; text-transform:uppercase">Net Weight Estimate</div>
+            <div style="font-size:28px; font-weight:900;"><span id="w-kg">0.00</span> kg</div>
+        </div>
+        <button onclick="window.print()" style="margin-top:10px; padding:15px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer; width:100%">PRINT TECHNICAL PDF</button>
+    </div>
+
+    <div class="workspace">
+        <div class="plate-wrapper">
+            <div class="dim-label" style="top:-25px; left:280px;">280.00 mm (WIDTH)</div>
+            <div class="dim-label" style="top:280px; left:-75px; transform:translate(-50%, -50%) rotate(-90deg);">280.00 mm (HEIGHT)</div>
+            
+            <div class="plate" id="p-face">
+                <div class="center-hole"><b>Ø 120.00</b></div>
+                <div id="lx" class="dim-line"></div>
+                <div id="ly" class="dim-line"></div>
+                <div id="lbx" class="dim-label"></div>
+                <div id="lby" class="dim-label"></div>
+                <div id="dynamic-hole">Ø35</div>
+            </div>
+
+            <table class="title-block">
+                <tr>
+                    <td><strong>DESIGNER:</strong> Ranvijay Kumar</td>
+                    <td><strong>CONTACT:</strong> 7800817675</td>
+                </tr>
+                <tr>
+                    <td><strong>THICKNESS:</strong> <span id="p-thk">20</span> mm</td>
+                    <td><strong>MATERIAL:</strong> <span id="p-mat">Steel</span></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: center;"><strong>CALCULATED WEIGHT:</strong> <span id="p-weight">0.00</span> kg</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function update() {
+            const d = parseFloat(document.getElementById('di').value);
+            const x = parseFloat(document.getElementById('xi').value);
+            const y = parseFloat(document.getElementById('yi').value);
+            const z = parseFloat(document.getElementById('zi').value);
+            const dens = parseFloat(document.getElementById('mat').value);
+            const matTxt = document.getElementById('mat').options[document.getElementById('mat').selectedIndex].text.split(' ')[0];
+            const s = 2; 
+
+            document.getElementById('zt').innerText = z + "mm";
+            document.getElementById('dt').innerText = d + "mm";
+            document.getElementById('xt').innerText = x + "mm";
+            document.getElementById('yt').innerText = y + "mm";
+
+            const netVolCm3 = ((28 * 28) - (Math.PI * 6**2) - (Math.PI * (d/20)**2)) * (z/10);
+            const finalKg = (netVolCm3 * dens) / 1000;
+            
+            document.getElementById('w-kg').innerText = finalKg.toFixed(2);
+            document.getElementById('p-weight').innerText = finalKg.toFixed(2);
+            document.getElementById('p-thk').innerText = z;
+            document.getElementById('p-mat').innerText = matTxt;
+
+            document.getElementById('p-face').style.boxShadow = `${z*0.5}px ${z*0.5}px 0px rgba(0,0,0,0.3)`;
+
+            const h = document.getElementById('dynamic-hole');
+            h.style.width = (d*s)+"px";
+            h.style.height = (d*s)+"px";
+            h.style.left = (x*s)+"px";
+            h.style.top = (y*s)+"px";
+            h.innerText = "Ø" + d;
+
+            const lx = document.getElementById('lx');
+            lx.style.width = (x*s)+"px";
+            lx.style.top = (y*s)+"px";
+            lx.style.left = "0";
+            document.getElementById('lbx').style.left = (x*s/2)+"px";
+            document.getElementById('lbx').style.top = (y*s)+"px";
+            document.getElementById('lbx').innerText = "X: " + x.toFixed(1);
+
+            const ly = document.getElementById('ly');
+            ly.style.height = (y*s)+"px";
+            ly.style.left = (x*s)+"px";
+            ly.style.top = "0";
+            document.getElementById('lby').style.left = (x*s)+"px";
+            document.getElementById('lby').style.top = (y*s/2)+"px";
+            document.getElementById('lby').innerText = "Y: " + y.toFixed(1);
+        }
+
+        document.getElementById('p-face').addEventListener('mousedown', (e) => {
+            const rect = document.getElementById('p-face').getBoundingClientRect();
+            document.getElementById('xi').value = Math.round((e.clientX - rect.left) / 2);
+            document.getElementById('yi').value = Math.round((e.clientY - rect.top) / 2);
+            update();
+        });
+        update();
+    </script>
+</body>
+</html>
